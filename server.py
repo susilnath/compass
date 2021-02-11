@@ -1,10 +1,9 @@
 import sys
 import select
+import time
 
 #connection
 import socket
-
-import time
 
 #initialize
 port=8080
@@ -28,14 +27,9 @@ def server():
 
     soc.listen(10)
     soc_list_input.append(soc)
+
     #incoming connection
-
-
     while soc_list_input:
-        # inp=input(">>")
-        # inp=inp.encode()
-        # connection.send(inp)
-        # print("[+] Message sent!")
 
         readc,writec,exceptc=select.select(soc_list_input,soc_list_output,soc_list_input)
 
@@ -59,6 +53,8 @@ def server():
                     soc_list_output.append(conn)
                 else:
                     soc_list_input.remove(conn) #close socket if no data is read
+                    alive.pop(conn_name)
+                    data.pop(conn_name)
                     print("[-] Closed connection!")
 
         for conn in writec:
@@ -66,17 +62,9 @@ def server():
 
             to_send=data[conn_name]
             broadcast(conn,to_send,conn_name)
-            # if conn_name:
-            #     if data[conn_name]:
-            #         conn.send(str(data[conn_name]).encode())
-            #         data[conn_name]=''
-            #         soc_list_output.remove(conn)
+
         continue
 
-
-        # received=connection.recv(1024)
-        # received=received.decode()
-        # print("[+] Received: "+received)
 
 def broadcast(conn,to_send,owner):
     for name in alive:
