@@ -85,7 +85,7 @@ def client():
     name=input(bcolors.bold+" -> Enter username: "+bcolors.endc)
     host=input(bcolors.bold+" -> Enter the hostname: "+bcolors.endc)
     soc.connect((host,port))
-    print(bcolors.underline+"[+] Connected to COMPASS"+bcolors.endc)
+    print(bcolors.underline+"*** Connected to COMPASS server ***"+bcolors.endc)
     soc.send(name.encode())
 
     sys.stdout.write("\033[34m"+'[Me :] '+ "\033[0m");sys.stdout.flush()

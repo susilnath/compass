@@ -44,9 +44,15 @@ def server():
                     alive[name]=connection
                     data[name]=''
                     print("[+] "+name+" joined")
+                    for i in alive.keys():
+                        if i==name:
+                            connection.send(str("ME and you are alive").encode())
+                            continue
+                        connection.send(str(i+", ").encode())
+
             else:
                 conn_name=list(alive.keys())[list(alive.values()).index(conn)]
-                data_rec=conn.recv(1024).decode()
+                data_rec=conn.recv(4096).decode()
                 if data_rec:
                     print(">>> "+conn_name+" : "+data_rec)
                     data[conn_name]=str(data[conn_name])+str(data_rec)
