@@ -30,7 +30,6 @@ def server():
                 print("[+] Adding "+str(address)+" to relay node")
             else:
                 data=conn.recv(1024)
-                print(data)
                 if data:
                     broadcast(sock,conn,data) 
                 else:

@@ -7,13 +7,13 @@ import socket
 import pickle #to serialise data
 
 #initialize
-port=8080
+port=8082
 soc_list_input=[]
 soc_list_output=[]
 msg_queue={}
 alive={}
 data={}
-
+dup_relay=[]
 rel_soc=0
 
 #binding
@@ -65,8 +65,10 @@ def server():
                 if data_rec:
                     print(">>> "+conn_name+" : "+data_rec)
 
-                    #commands
-                    rel_soc=con_relay_temp()
+                    #rel_soc=con_relay_temp()
+                    if '_relay' in data_rec:
+                        rel_soc=con_relay()
+                        sync(rel_soc,2)
 
                     data[conn_name]=str(data[conn_name])+str(data_rec)
                     soc_list_output.append(conn)
@@ -84,15 +86,28 @@ def server():
 
         continue
 
+def dict_dup(alive_dict):
+    rev_alive={}
+    dup_names=[]
+
+    for key,values in alive_dict.items():
+        if values not in rev_alive:
+            rev_alive[values]=1
+        else:
+            dup_names.append(key)
+    return dup_names
 
 def broadcast(conn,to_send,owner):
     for name in alive:
         if alive[name]==conn:
             continue
+        elif name in dup_relay:
+            continue
+        elif conn != rel_soc:
+            sync(rel_soc,2)
         else:
             send_conn=alive[name]
             send_conn.send(str("["+owner+" :] "+to_send).encode())
-    sync(rel_soc,2)
     data[owner]=''
     soc_list_output.remove(conn)
 
@@ -131,22 +146,32 @@ def sync(sock,mode,rel_data=0):
     if mode==1:#receive
         print("[#] Received from relay!")
         rel_alive,rel_data=unserialise(rel_data)
+        for i in rel_alive:
+            if i in alive:
+                continue
+            alive[i]=sock
+        dup_relay=dict_dup(alive)
+        for name,value in rel_data.items():
+            if name not in data:
+                data[name]=str(value)
+                continue
+            data[name]=str(data[name])+str(value)
+        soc_list_output.append(sock)
 
-        print(rel_alive)
-        print(rel_data)
-    
+
     if mode==2:#send
         ser_send=serialise(list(alive.keys()),data)
         sock.send(ser_send)
         print("[#] Sent to relay successfully!")
 
-def con_relay_temp():
-    global a
-    if a==1:
-        sock=con_relay()
-        a=0
-        return sock
-    else:
-        return rel_soc
-a=1
+# def con_relay_temp():
+#     global a
+#     if a==1:
+#         sock=con_relay()
+#         sync(sock,2)
+#         a=0
+#         return sock
+#     else:
+#         return rel_soc
+# a=1
 server()
