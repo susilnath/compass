@@ -111,7 +111,7 @@ def serialise(syn_alive,syn_data):
     ser_alive=pickle.dumps(syn_alive)
     ser_data=pickle.dumps(data)
 
-    alive_length=str(sys.getsizeof(ser_alive)).rjust(4,'0')
+    alive_length=str(len(ser_alive)).rjust(4,'0')
     alive_length=alive_length.encode()
 
     return alive_length+ser_alive+ser_data
@@ -119,7 +119,7 @@ def serialise(syn_alive,syn_data):
 def unserialise(rec_data):
     alive_len=int(rec_data[:4].decode())
     ser_alive=rec_data[4:][:alive_len]
-    ser_data=rec_data[alive_len:]
+    ser_data=rec_data[4+alive_len:]
 
     unser_alive=pickle.loads(ser_alive)
     unser_data=pickle.loads(ser_data)
@@ -130,10 +130,10 @@ def sync(sock,mode,rel_data=0):
     #sync alive and data dicts across servers
     if mode==1:#receive
         print("[#] Received from relay!")
+        rel_alive,rel_data=unserialise(rel_data)
+
+        print(rel_alive)
         print(rel_data)
-        #rel_alive,rel_data=unserialise(rel_data)
-        #print(rel_alive)
-        #print(rel_data)
     
     if mode==2:#send
         ser_send=serialise(list(alive.keys()),data)
