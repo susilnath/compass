@@ -125,7 +125,7 @@ def client():
                     time.sleep(1)
                     continue
             else:
-                inp=input(members["Me"]+'[Me ] '+ "\033[0m")
+                inp=input(members["Me"]+'[Me :] '+ "\033[0m")
                 soc.send(inp.encode())
 
 client()

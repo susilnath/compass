@@ -9,6 +9,7 @@ rel_name="hades"
 rel_port=0
 port=int(sys.argv[1])
 members=[]
+relays=[]
 
 def server():
     sock=socket.socket()
@@ -24,6 +25,9 @@ def server():
     while 1:
         readc,writec,exceptc=select.select(members,[],[])
         
+        print(members)
+        print(relays)
+
         for conn in readc:
             if conn==sock:
                 connection,address=conn.accept()
@@ -33,21 +37,42 @@ def server():
             else:
                 data=conn.recv(4096)
                 if data:
+                    print(data)
                     try:
                         if "_relay_chain" in data.decode()[:13]:
                             info=data.decode().split()
 
                             rel_sock=relay_chain(info[1],info[2])
                             members.append(rel_sock)
+                            relays.append(rel_sock)
                             print("[+] Connected to another relay")
                             continue
-                    except:
+
+                        if "_relay_control" in data.decode()[:15]:
+                            info=data.decode().split()
+                            print(info)
+                            
+                            if len(info)>3:
+                                sock_num=int(info[1])
+                                to_send=''
+                                for i in range(len(info)):
+                                    if i==0 or i==1:
+                                        continue
+                                    print(i)
+                                    print(to_send)
+                                    to_send=to_send+info[i]+" "
+                                print(relays)
+                                relays[sock_num].send(to_send.encode())
+
+                    except BaseException as exc:
+                        print(exc)
                         print("[+] No command sent!, broadcasting...")
                         broadcast(sock,conn,data) 
                         continue
                 else:
                     members.remove(conn)
                     print("[+] A server disconnected!")
+                    print(conn)
 
 def broadcast(sock,conn,to_send):
     for i in members:
@@ -62,7 +87,7 @@ def relay_chain(host,rport):
         rel_name=host
         rel_port=int(rport)
     else:
-        print("Wrong host/port")
+        print("[-] Wrong host/port")
         return 0
     print("[+] Connecting to relay - "+rel_name+" : "+str(rel_port))
     sock=socket.socket()

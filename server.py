@@ -38,8 +38,6 @@ def server():
 
         readc,writec,exceptc=select.select(soc_list_input,soc_list_output,soc_list_input)
 
-        print(data)
-
         for conn in readc:
             if conn is soc:
                 connection,address=soc.accept()
@@ -59,7 +57,10 @@ def server():
 
             elif conn == rel_soc:
                 rel_data_rec=conn.recv(4096)
-                sync(conn,1,rel_data_rec)
+                try:
+                    sync(conn,1,rel_data_rec)
+                except Exception:
+                    print("[-] Raised Exception")
 
             else:
                 conn_name=list(alive.keys())[list(alive.values()).index(conn)]
@@ -68,16 +69,27 @@ def server():
                     print(">>> "+conn_name+" : "+data_rec)
 
                     #rel_soc=con_relay_temp()
-                    if '_relay_chain' in data_rec[:13]:
-                        info=data_rec.split()
-                        rel_soc.send(str("_relay_chain "+info[1]+" "+info[2]).encode())
-                        continue
+                    try:
+                        if '_relay_chain' in data_rec[:13]:
+                        
+                            info=data_rec.split()
+                            rel_soc.send(str("_relay_chain "+info[1]+" "+info[2]).encode())
+                            continue
 
-                    if '_relay' in data_rec[:7]:
-                        info=data_rec.split()
-                        rel_soc=con_relay(info[1],info[2])
-                        sync(rel_soc,2)
-                        continue
+                        if '_relay_control' in data_rec[:15]:
+                            info=data_rec.split()
+                            rel_soc.send(data_rec.encode())
+                            continue
+
+                        if '_relay' in data_rec[:7]:
+                            info=data_rec.split()
+                            rel_soc=con_relay(info[1],info[2])
+                            sync(rel_soc,2)
+                            continue
+
+                    except:
+                        print("[-] Command incomplete")
+
 
                     data[conn_name].append(data_rec)
                     soc_list_output.append(conn)
@@ -182,14 +194,4 @@ def sync(sock,mode,rel_data=0):
         sock.send(ser_send)
         print("[#] Sent to relay successfully!")
 
-# def con_relay_temp():
-#     global a
-#     if a==1:
-#         sock=con_relay()
-#         sync(sock,2)
-#         a=0
-#         return sock
-#     else:
-#         return rel_soc
-# a=1
 server()
