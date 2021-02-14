@@ -68,8 +68,14 @@ def server():
                     print(">>> "+conn_name+" : "+data_rec)
 
                     #rel_soc=con_relay_temp()
-                    if '_relay' in data_rec:
-                        rel_soc=con_relay()
+                    if '_relay_chain' in data_rec[:13]:
+                        info=data_rec.split()
+                        rel_soc.send(str("_relay_chain "+info[1]+" "+info[2]).encode())
+                        continue
+
+                    if '_relay' in data_rec[:7]:
+                        info=data_rec.split()
+                        rel_soc=con_relay(info[1],info[2])
                         sync(rel_soc,2)
                         continue
 
@@ -119,9 +125,13 @@ def broadcast(conn):
 
 
 
-def con_relay():
-    relay_addr="hades"
-    relay_port=8081
+def con_relay(host,rport):
+    if host!=0 and port!=0:
+        relay_addr=host
+        relay_port=int(rport)
+    else:
+        print("[-] Wrong host/port")
+        return 0
     sock=socket.socket()
     sock.connect((relay_addr,relay_port))
 
