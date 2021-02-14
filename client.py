@@ -7,7 +7,7 @@ import signal
 import random
 
 #initialisation
-port=8082
+port=int(sys.argv[1])
 
 def sighandler(signum,frame):
     print(bcolors.fail+"\r[-] Ending Session"+bcolors.endc)

@@ -7,7 +7,7 @@ import socket
 import pickle #to serialise data
 
 #initialize
-port=8082
+port=int(sys.argv[1])
 soc_list_input=[]
 soc_list_output=[]
 msg_queue={}
@@ -38,6 +38,8 @@ def server():
 
         readc,writec,exceptc=select.select(soc_list_input,soc_list_output,soc_list_input)
 
+        print(data)
+
         for conn in readc:
             if conn is soc:
                 connection,address=soc.accept()
@@ -47,7 +49,7 @@ def server():
                 name=connection.recv(1024).decode()
                 if name not in alive:
                     alive[name]=connection
-                    data[name]=''
+                    data[name]=[]
                     print("[+] "+name+" joined")
                     for i in alive.keys():
                         if i==name:
@@ -69,8 +71,9 @@ def server():
                     if '_relay' in data_rec:
                         rel_soc=con_relay()
                         sync(rel_soc,2)
+                        continue
 
-                    data[conn_name]=str(data[conn_name])+str(data_rec)
+                    data[conn_name].append(data_rec)
                     soc_list_output.append(conn)
                 else:
                     soc_list_input.remove(conn) #close socket if no data is read
@@ -81,8 +84,8 @@ def server():
         for conn in writec:
             conn_name=list(alive.keys())[list(alive.values()).index(conn)]#find the name from connection
 
-            to_send=data[conn_name]
-            broadcast(conn,to_send,conn_name)
+            broadcast(conn)
+            soc_list_output.remove(conn)
 
         continue
 
@@ -97,19 +100,24 @@ def dict_dup(alive_dict):
             dup_names.append(key)
     return dup_names
 
-def broadcast(conn,to_send,owner):
-    for name in alive:
-        if alive[name]==conn:
+def broadcast(conn):
+    if conn != rel_soc and rel_soc != 0:
+        sync(rel_soc,2)
+    for name,msg_list in data.items():
+        if not msg_list:
             continue
-        elif name in dup_relay:
-            continue
-        elif conn != rel_soc:
-            sync(rel_soc,2)
         else:
-            send_conn=alive[name]
-            send_conn.send(str("["+owner+" :] "+to_send).encode())
-    data[owner]=''
-    soc_list_output.remove(conn)
+            for send_name,send_conn in alive.items():
+                if name==send_name:
+                    continue
+                if send_conn==rel_soc:
+                    continue
+                else:
+                    for to_send in msg_list:
+                        send_conn.send(str("["+name+" :] "+to_send).encode())
+            data[name]=[]
+
+
 
 def con_relay():
     relay_addr="hades"
@@ -153,9 +161,9 @@ def sync(sock,mode,rel_data=0):
         dup_relay=dict_dup(alive)
         for name,value in rel_data.items():
             if name not in data:
-                data[name]=str(value)
+                data[name]=value
                 continue
-            data[name]=str(data[name])+str(value)
+            data[name].extend(value)
         soc_list_output.append(sock)
 
 
