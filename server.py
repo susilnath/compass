@@ -57,11 +57,20 @@ def server():
 
             elif conn == rel_soc:
                 rel_data_rec=conn.recv(4096)
-                try:
-                    sync(conn,1,rel_data_rec)
-                except Exception:
-                    print("[-] Raised Exception")
-
+                if rel_data_rec:
+                    try:
+                        sync(conn,1,rel_data_rec)
+                    except BaseException as esc:
+                        print("[-] Raised Exception: "+str(esc))
+                else:
+                    soc_list_input.remove(conn)
+                    for item,value in alive.items():
+                        if value==conn:
+                            alive.pop(item)
+                            data.pop(item)
+                    global dup_relay
+                    dup_relay=[]
+                    print("[+] Relay disconnected!")
             else:
                 conn_name=list(alive.keys())[list(alive.values()).index(conn)]
                 data_rec=conn.recv(4096).decode()

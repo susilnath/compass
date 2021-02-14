@@ -122,8 +122,9 @@ def client():
                         print("\r"+bcolors.cyan+data+bcolors.endc)
                     sys.stdout.write(members["Me"]+'[Me :] '+ "\033[0m");sys.stdout.flush()
                 else:
-                    time.sleep(1)
-                    continue
+                    print("\r"+bcolors.fail+"[-] Disconnected from server."+bcolors.endc)
+                    print("\r"+bcolors.yellow+"[>] Quitting.....bye!!!"+bcolors.endc)
+                    sys.exit()
             else:
                 inp=input(members["Me"]+'[Me :] '+ "\033[0m")
                 soc.send(inp.encode())

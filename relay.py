@@ -24,9 +24,6 @@ def server():
 
     while 1:
         readc,writec,exceptc=select.select(members,[],[])
-        
-        print(members)
-        print(relays)
 
         for conn in readc:
             if conn==sock:
@@ -37,7 +34,6 @@ def server():
             else:
                 data=conn.recv(4096)
                 if data:
-                    print(data)
                     try:
                         if "_relay_chain" in data.decode()[:13]:
                             info=data.decode().split()
@@ -50,7 +46,6 @@ def server():
 
                         if "_relay_control" in data.decode()[:15]:
                             info=data.decode().split()
-                            print(info)
                             
                             if len(info)>3:
                                 sock_num=int(info[1])
@@ -58,21 +53,17 @@ def server():
                                 for i in range(len(info)):
                                     if i==0 or i==1:
                                         continue
-                                    print(i)
-                                    print(to_send)
                                     to_send=to_send+info[i]+" "
-                                print(relays)
                                 relays[sock_num].send(to_send.encode())
 
                     except BaseException as exc:
-                        print(exc)
+                        print("[-] Exception: "+str(exc))
                         print("[+] No command sent!, broadcasting...")
                         broadcast(sock,conn,data) 
                         continue
                 else:
                     members.remove(conn)
                     print("[+] A server disconnected!")
-                    print(conn)
 
 def broadcast(sock,conn,to_send):
     for i in members:
